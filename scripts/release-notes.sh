@@ -19,7 +19,7 @@ BODY="${BODY}[KSU-Next Manager](${KSUN_MANAGER_URL})"$'\n'
 BODY="${BODY}[ReSukiSU Manager](${RESUKI_MANAGER_URL})"$'\n'
 BODY="${BODY}**Kernel:** \`${KERNEL_UNAME}\`"$'\n\n'
 
-BODY="${BODY}**Variants:** KSU-Next, ReSukiSU, NoKSU"$'\n'
+BODY="${BODY}**Variants:** KSU-Next, KSU-Next + SUSFS, ReSukiSU, ReSukiSU + SUSFS, NoKSU"$'\n'
 BODY="${BODY}**Device:** Motorola Edge 40 Pro (rtwo)"$'\n'
 
 

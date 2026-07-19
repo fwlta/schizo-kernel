@@ -19,7 +19,9 @@ automated builds for shibuya kernel on motorola rtwo.
 ## variants
 
 - kernelsu-next
+- kernelsu-next with susfs
 - resukisu
+- resukisu with susfs
 - noksu
 
 builds can be packaged separately or in a single aio zip.

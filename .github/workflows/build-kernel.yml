@@ -5,7 +5,7 @@ on:
     inputs:
       variant_name:  { type: string, required: true }
       source_type:   { type: string, required: true }   # moto
-      ksu_type:      { type: string, required: true }   # ksun | resuki | none
+      ksu_type:      { type: string, required: true }   # ksun | ksun-susfs | resuki | resuki-susfs | none
       artifact_name: { type: string, required: true }
       defconfig:     { type: string, required: true }
       clo_fragment:  { type: string, required: false }
@@ -101,7 +101,7 @@ jobs:
             sed -i '/source "security\/keys\/Kconfig"/a source "security/baseband-guard/Kconfig"' \
             security/Kconfig
 
-      - name: "Setup KSU"
+      - name: "Setup root integration"
         if: inputs.ksu_type != 'none'
         env:
           KSU_TYPE:   ${{ inputs.ksu_type }}

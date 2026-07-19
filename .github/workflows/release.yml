@@ -86,11 +86,15 @@ jobs:
             filename="$(basename "$zip")"
             sha256="$(sha256sum "$zip" | cut -d' ' -f1)"
             case "$filename" in
+              *-ksun-susfs.zip) variant="KSU-Next + SUSFS" ;;
+              *-resuki-susfs.zip) variant="ReSukiSU + SUSFS" ;;
               *-ksun.zip)  variant="KSU-Next" ;;
               *-resuki.zip)  variant="ReSukiSU" ;;
               *-noksu.zip) variant="NoKSU" ;;
+              *KSU-Next*SUSFS*) variant="KSU-Next + SUSFS" ;;
+              *ReSukiSU*SUSFS*) variant="ReSukiSU + SUSFS" ;;
               *KSU-Next*) variant="KSU-Next" ;;
-              *ReSukiSU*)   variant="ReSukiSU" ;;
+              *ReSukiSU*) variant="ReSukiSU" ;;
               *NoKSU*)    variant="NoKSU" ;;
               *)          variant="Kernel" ;;
             esac

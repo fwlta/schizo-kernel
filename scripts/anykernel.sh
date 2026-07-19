@@ -1,7 +1,6 @@
 ### AnyKernel3 Ramdisk Mod Script
 ## osm0sis @ xda-developers
 
-### AnyKernel setup
 properties() { '
 kernel.string=Shibuya Kernel for Motorola rtwo
 do.devicecheck=0
@@ -13,13 +12,12 @@ device.name1=rtwo
 supported.versions=13-16
 supported.patchlevels=
 supported.vendorpatchlevels=
-'; } # end properties
+'; }
 
-### AnyKernel install
 boot_attributes() {
 set_perm_recursive 0 0 755 644 $RAMDISK/*;
 set_perm_recursive 0 0 750 750 $RAMDISK/init* $RAMDISK/sbin;
-} # end attributes
+}
 
 BLOCK=boot;
 IS_SLOT_DEVICE=auto;
@@ -28,18 +26,23 @@ PATCH_VBMETA_FLAG=auto;
 
 . tools/ak3-core.sh;
 
-# Detect available images (Moto variants only — no GKI/CLO distinction)
-HAS_KSU=0; HAS_RESUKI=0; HAS_NOKSU=0;
-[ -f "$AKHOME/Image.moto.ksu" ]   && HAS_KSU=1;
-[ -f "$AKHOME/Image.moto.resuki" ]  && HAS_RESUKI=1;
-[ -f "$AKHOME/Image.moto.noksu" ] && HAS_NOKSU=1;
-TOTAL=$((HAS_KSU + HAS_RESUKI + HAS_NOKSU));
+HAS_KSU=0;
+HAS_KSU_SUSFS=0;
+HAS_RESUKI=0;
+HAS_RESUKI_SUSFS=0;
+HAS_NOKSU=0;
 
+[ -f "$AKHOME/Image.moto.ksu" ] && HAS_KSU=1;
+[ -f "$AKHOME/Image.moto.ksu.susfs" ] && HAS_KSU_SUSFS=1;
+[ -f "$AKHOME/Image.moto.resuki" ] && HAS_RESUKI=1;
+[ -f "$AKHOME/Image.moto.resuki.susfs" ] && HAS_RESUKI_SUSFS=1;
+[ -f "$AKHOME/Image.moto.noksu" ] && HAS_NOKSU=1;
+
+TOTAL=$((HAS_KSU + HAS_KSU_SUSFS + HAS_RESUKI + HAS_RESUKI_SUSFS + HAS_NOKSU));
 SELECTED_IMAGE="";
 
 flush_keys() { sleep 0.15; }
 
-# AIO: show selection menu
 if [ "$TOTAL" -gt 1 ]; then
   ui_print "select variant";
   ui_print "vol+ next | vol- confirm";
@@ -47,10 +50,13 @@ if [ "$TOTAL" -gt 1 ]; then
 
   print_menu() {
     I=0;
-    [ "$HAS_NOKSU" = "1" ] && { I=$((I+1)); [ "$OPTION" = "$I" ] && ui_print "> NoKSU (Vanilla)" || ui_print "  NoKSU (Vanilla)"; }
-    [ "$HAS_KSU"   = "1" ] && { I=$((I+1)); [ "$OPTION" = "$I" ] && ui_print "> KSU-Next" || ui_print "  KSU-Next"; }
-    [ "$HAS_RESUKI"  = "1" ] && { I=$((I+1)); [ "$OPTION" = "$I" ] && ui_print "> ReSukiSU" || ui_print "  ReSukiSU"; }
+    [ "$HAS_NOKSU" = "1" ] && { I=$((I+1)); [ "$OPTION" = "$I" ] && ui_print "> NoKSU" || ui_print "  NoKSU"; }
+    [ "$HAS_KSU" = "1" ] && { I=$((I+1)); [ "$OPTION" = "$I" ] && ui_print "> KSU-Next" || ui_print "  KSU-Next"; }
+    [ "$HAS_KSU_SUSFS" = "1" ] && { I=$((I+1)); [ "$OPTION" = "$I" ] && ui_print "> KSU-Next + SUSFS" || ui_print "  KSU-Next + SUSFS"; }
+    [ "$HAS_RESUKI" = "1" ] && { I=$((I+1)); [ "$OPTION" = "$I" ] && ui_print "> ReSukiSU" || ui_print "  ReSukiSU"; }
+    [ "$HAS_RESUKI_SUSFS" = "1" ] && { I=$((I+1)); [ "$OPTION" = "$I" ] && ui_print "> ReSukiSU + SUSFS" || ui_print "  ReSukiSU + SUSFS"; }
   }
+
   print_menu;
   flush_keys;
 
@@ -59,43 +65,51 @@ if [ "$TOTAL" -gt 1 ]; then
     case "$input" in
       *KEY_VOLUMEUP*DOWN*)
         OPTION=$(( OPTION % TOTAL + 1 ));
-        print_menu; flush_keys ;;
+        print_menu;
+        flush_keys
+        ;;
       *KEY_VOLUMEDOWN*DOWN*)
-        flush_keys; break ;;
+        flush_keys;
+        break
+        ;;
     esac
   done
 
   I=0;
-  [ "$HAS_NOKSU" = "1" ] && { I=$((I+1)); [ "$OPTION" = "$I" ] && { SELECTED_IMAGE="Image.moto.noksu"; ui_print "selected: noksu"; }; }
-  [ "$HAS_KSU"   = "1" ] && { I=$((I+1)); [ "$OPTION" = "$I" ] && { SELECTED_IMAGE="Image.moto.ksu";   ui_print "selected: kernelsu-next"; }; }
-  [ "$HAS_RESUKI"  = "1" ] && { I=$((I+1)); [ "$OPTION" = "$I" ] && { SELECTED_IMAGE="Image.moto.resuki";  ui_print "selected: resukisu"; }; }
+  [ "$HAS_NOKSU" = "1" ] && { I=$((I+1)); [ "$OPTION" = "$I" ] && SELECTED_IMAGE="Image.moto.noksu"; }
+  [ "$HAS_KSU" = "1" ] && { I=$((I+1)); [ "$OPTION" = "$I" ] && SELECTED_IMAGE="Image.moto.ksu"; }
+  [ "$HAS_KSU_SUSFS" = "1" ] && { I=$((I+1)); [ "$OPTION" = "$I" ] && SELECTED_IMAGE="Image.moto.ksu.susfs"; }
+  [ "$HAS_RESUKI" = "1" ] && { I=$((I+1)); [ "$OPTION" = "$I" ] && SELECTED_IMAGE="Image.moto.resuki"; }
+  [ "$HAS_RESUKI_SUSFS" = "1" ] && { I=$((I+1)); [ "$OPTION" = "$I" ] && SELECTED_IMAGE="Image.moto.resuki.susfs"; }
 
-# Single image: auto-detect
-elif [ "$HAS_NOKSU" = "1" ]; then SELECTED_IMAGE="Image.moto.noksu"; ui_print "variant: noksu";
-elif [ "$HAS_KSU"   = "1" ]; then SELECTED_IMAGE="Image.moto.ksu";   ui_print "variant: kernelsu-next";
-elif [ "$HAS_RESUKI"  = "1" ]; then SELECTED_IMAGE="Image.moto.resuki";  ui_print "variant: resukisu";
+elif [ "$HAS_NOKSU" = "1" ]; then SELECTED_IMAGE="Image.moto.noksu";
+elif [ "$HAS_KSU" = "1" ]; then SELECTED_IMAGE="Image.moto.ksu";
+elif [ "$HAS_KSU_SUSFS" = "1" ]; then SELECTED_IMAGE="Image.moto.ksu.susfs";
+elif [ "$HAS_RESUKI" = "1" ]; then SELECTED_IMAGE="Image.moto.resuki";
+elif [ "$HAS_RESUKI_SUSFS" = "1" ]; then SELECTED_IMAGE="Image.moto.resuki.susfs";
 elif [ -f "$AKHOME/Image" ]; then :;
 else
   ui_print "error: kernel image not found";
   exit 1;
 fi
 
-# Swap selected to Image
 if [ -n "$SELECTED_IMAGE" ]; then
+  ui_print "variant: $(basename "$SELECTED_IMAGE" | sed 's/^Image\.moto\.//')";
   mv -f "$AKHOME/$SELECTED_IMAGE" "$AKHOME/Image";
-  rm -f "$AKHOME/Image.moto.ksu" "$AKHOME/Image.moto.resuki" "$AKHOME/Image.moto.noksu";
+  rm -f "$AKHOME"/Image.moto.*;
 fi
 
 [ -f "$AKHOME/Image" ] || { ui_print "error: image preparation failed"; exit 1; }
 
-# Flash — auto-detect init_boot vs boot
 if [ -L "/dev/block/bootdevice/by-name/init_boot_a" ] || \
    [ -L "/dev/block/by-name/init_boot_a" ]; then
   ui_print "target: init_boot";
-  split_boot; flash_boot;
+  split_boot;
+  flash_boot;
 else
   ui_print "target: boot";
-  dump_boot; write_boot;
+  dump_boot;
+  write_boot;
 fi
+
 ui_print "installation complete";
-## end boot install
